@@ -1,5 +1,7 @@
 package ast
 
+import "encoding/json"
+
 // ListType contains bitwise or'ed flags for list and list item objects.
 type ListType int
 
@@ -74,13 +76,30 @@ type Node interface {
 
 // Container is a type of node that can contain children
 type Container struct {
-	Parent   Node
+	Parent   Node `json:"-"`
 	Children []Node
 
 	Literal []byte // Text contents of the leaf nodes
 	Content []byte // Markdown content of the block nodes
 
 	*Attribute // Block level attribute
+}
+
+func (c *Container) MarshalJSON() ([]byte, error) {
+	type ContainerJSON struct {
+		Children []Node `json:"children"`
+		Literal  string `json:"literal"`
+		Content  string `json:"content"`
+		*Attribute
+	}
+	var c1 ContainerJSON
+	c1.Children = c.Children
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+
+	return json.Marshal(&c1)
+
 }
 
 // AsContainer returns itself as *Container
@@ -115,12 +134,26 @@ func (c *Container) SetChildren(newChildren []Node) {
 
 // Leaf is a type of node that cannot have children
 type Leaf struct {
-	Parent Node
+	Parent Node `json:"-"`
 
 	Literal []byte // Text contents of the leaf nodes
 	Content []byte // Markdown content of the block nodes
 
 	*Attribute // Block level attribute
+}
+
+func (c *Leaf) MarshalJSON() ([]byte, error) {
+	type LeafJSON struct {
+		Literal string `json:"literal"`
+		Content string `json:"content"`
+		*Attribute
+	}
+	var c1 LeafJSON
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+
+	return json.Marshal(&c1)
 }
 
 // AsContainer returns nil
@@ -224,6 +257,30 @@ type Heading struct {
 	HeadingID    string // This might hold heading ID, if present
 	IsTitleblock bool   // Specifies whether it's a title block
 	IsSpecial    bool   // We are a special heading (starts with .#)
+}
+
+func (c *Heading) MarshalJSON() ([]byte, error) {
+	type HeadingJSON struct {
+		Type         string `json:"type"`
+		Children     []Node `json:"children"`
+		Literal      string `json:"literal"`
+		Content      string `json:"content"`
+		Level        int    `json:"level"`
+		IsTitleblock bool   `json:"isTitleBlock"`
+
+		*Attribute
+	}
+	var c1 HeadingJSON
+	c1.Children = c.Children
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+	c1.Type = "heading"
+	c1.Level = c.Level
+	c1.IsTitleblock = c.IsTitleblock
+
+	return json.Marshal(&c1)
+
 }
 
 // HorizontalRule represents markdown horizontal rule node
