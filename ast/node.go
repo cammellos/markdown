@@ -204,6 +204,24 @@ type BlockQuote struct {
 	Container
 }
 
+func (c *BlockQuote) MarshalJSON() ([]byte, error) {
+	type BlockQuoteJSON struct {
+		Type     string `json:"type"`
+		Children []Node `json:"children"`
+		Literal  string `json:"literal"`
+		Content  string `json:"content"`
+		*Attribute
+	}
+	var c1 BlockQuoteJSON
+	c1.Children = c.Children
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+	c1.Type = "blockquote"
+
+	return json.Marshal(&c1)
+}
+
 // Aside represents an markdown aside node.
 type Aside struct {
 	Container
@@ -293,9 +311,45 @@ type Emph struct {
 	Container
 }
 
+func (c *Emph) MarshalJSON() ([]byte, error) {
+	type EmphJSON struct {
+		Type     string `json:"type"`
+		Children []Node `json:"children"`
+		Literal  string `json:"literal"`
+		Content  string `json:"content"`
+		*Attribute
+	}
+	var c1 EmphJSON
+	c1.Children = c.Children
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+	c1.Type = "emph"
+
+	return json.Marshal(&c1)
+}
+
 // Strong represents markdown strong node
 type Strong struct {
 	Container
+}
+
+func (c *Strong) MarshalJSON() ([]byte, error) {
+	type StrongJSON struct {
+		Type     string `json:"type"`
+		Children []Node `json:"children"`
+		Literal  string `json:"literal"`
+		Content  string `json:"content"`
+		*Attribute
+	}
+	var c1 StrongJSON
+	c1.Children = c.Children
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+	c1.Type = "strong"
+
+	return json.Marshal(&c1)
 }
 
 // Del represents markdown del node
@@ -312,6 +366,28 @@ type Link struct {
 	NoteID      int    // NoteID contains a serial number of a footnote, zero if it's not a footnote
 	Footnote    Node   // If it's a footnote, this is a direct link to the footnote Node. Otherwise nil.
 	DeferredID  []byte // If a deferred link this holds the original ID.
+}
+
+func (c *Link) MarshalJSON() ([]byte, error) {
+	type LinkJSON struct {
+		Type        string `json:"type"`
+		Children    []Node `json:"children"`
+		Literal     string `json:"literal"`
+		Content     string `json:"content"`
+		Title       string `json:"title"`
+		Destination string `json:"destination"`
+		*Attribute
+	}
+	var c1 LinkJSON
+	c1.Children = c.Children
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+	c1.Title = string(c.Title)
+	c1.Destination = string(c.Destination)
+	c1.Type = "link"
+
+	return json.Marshal(&c1)
 }
 
 // CrossReference is a reference node.
