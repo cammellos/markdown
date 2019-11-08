@@ -93,7 +93,10 @@ func sanitizeAnchorName(text string) string {
 func (p *Parser) block(data []byte) {
 	// this is called recursively: enforce a maximum depth
 	if p.nesting >= p.maxNesting {
+		// just assume is a paragraph and be done with it
+		p.renderParagraph(data)
 		return
+
 	}
 	p.nesting++
 

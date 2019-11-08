@@ -435,6 +435,20 @@ type CodeBlock struct {
 	FenceOffset int
 }
 
+func (c *CodeBlock) MarshalJSON() ([]byte, error) {
+	type CodeBlockJSON struct {
+		Literal string `json:"literal"`
+		Content string `json:"content"`
+		*Attribute
+	}
+	var c1 CodeBlockJSON
+	c1.Literal = string(c.Literal)
+	c1.Content = string(c.Content)
+	c1.Attribute = c.Attribute
+
+	return json.Marshal(&c1)
+}
+
 // Softbreak represents markdown softbreak node
 // Note: not used currently
 type Softbreak struct {

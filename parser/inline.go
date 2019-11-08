@@ -22,7 +22,11 @@ var (
 // Each function returns the number of consumed chars.
 func (p *Parser) Inline(currBlock ast.Node, data []byte) {
 	// handlers might call us recursively: enforce a maximum depth
+	if len(data) == 0 {
+		return
+	}
 	if p.nesting >= p.maxNesting || len(data) == 0 {
+		ast.AppendChild(currBlock, newTextNode(data))
 		return
 	}
 	p.nesting++

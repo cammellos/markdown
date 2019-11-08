@@ -129,7 +129,7 @@ func NewWithExtensions(extension Extensions) *Parser {
 	p := Parser{
 		refs:         make(map[string]*reference),
 		refsRecord:   make(map[string]struct{}),
-		maxNesting:   16,
+		maxNesting:   2,
 		insideLink:   false,
 		Doc:          &ast.Document{},
 		extensions:   extension,
