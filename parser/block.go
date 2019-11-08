@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"html"
 	"regexp"
-	"strconv"
 	"unicode"
 
 	"github.com/gomarkdown/markdown/ast"
@@ -102,109 +101,9 @@ func (p *Parser) block(data []byte) {
 
 	// parse out one block-level construct at a time
 	for len(data) > 0 {
-		// attributes that can be specific before a block element:
-		//
-		// {#id .class1 .class2 key="value"}
-		if p.extensions&Attributes != 0 {
-			data = p.attribute(data)
-		}
-
-		if p.extensions&Includes != 0 {
-			f := p.readInclude
-			path, address, consumed := p.isInclude(data)
-			if consumed == 0 {
-				path, address, consumed = p.isCodeInclude(data)
-				f = p.readCodeInclude
-			}
-			if consumed > 0 {
-				included := f(p.includeStack.Last(), path, address)
-				p.includeStack.Push(path)
-				p.block(included)
-				p.includeStack.Pop()
-				data = data[consumed:]
-				continue
-			}
-		}
-
-		// user supplied parser function
-		if p.Opts.ParserHook != nil {
-			node, blockdata, consumed := p.Opts.ParserHook(data)
-			if consumed > 0 {
-				data = data[consumed:]
-
-				if node != nil {
-					p.addBlock(node)
-					if blockdata != nil {
-						p.block(blockdata)
-						p.finalize(node)
-					}
-				}
-				continue
-			}
-		}
-
-		// prefixed heading:
-		//
-		// # Heading 1
-		// ## Heading 2
-		// ...
-		// ###### Heading 6
-		if p.isPrefixHeading(data) {
-			data = data[p.prefixHeading(data):]
-			continue
-		}
-
-		// prefixed special heading:
-		// (there are no levels.)
-		//
-		// .# Abstract
-		if p.isPrefixSpecialHeading(data) {
-			data = data[p.prefixSpecialHeading(data):]
-			continue
-		}
-
-		// block of preformatted HTML:
-		//
-		// <div>
-		//     ...
-		// </div>
-		if data[0] == '<' {
-			if i := p.html(data, true); i > 0 {
-				data = data[i:]
-				continue
-			}
-		}
-
-		// title block
-		//
-		// % stuff
-		// % more stuff
-		// % even more stuff
-		if p.extensions&Titleblock != 0 {
-			if data[0] == '%' {
-				if i := p.titleBlock(data, true); i > 0 {
-					data = data[i:]
-					continue
-				}
-			}
-		}
-
 		// blank lines.  note: returns the # of bytes to skip
 		if i := p.isEmpty(data); i > 0 {
 			data = data[i:]
-			continue
-		}
-
-		// indented code block:
-		//
-		//     func max(a, b int) int {
-		//         if a > b {
-		//             return a
-		//         }
-		//         return b
-		//      }
-		if p.codePrefix(data) > 0 {
-			data = data[p.code(data):]
 			continue
 		}
 
@@ -225,20 +124,6 @@ func (p *Parser) block(data []byte) {
 			}
 		}
 
-		// horizontal rule:
-		//
-		// ------
-		// or
-		// ******
-		// or
-		// ______
-		if p.isHRule(data) {
-			p.addBlock(&ast.HorizontalRule{})
-			i := skipUntilChar(data, 0, '\n')
-			data = data[i:]
-			continue
-		}
-
 		// block quote:
 		//
 		// > A big quote I found somewhere
@@ -246,103 +131,6 @@ func (p *Parser) block(data []byte) {
 		if p.quotePrefix(data) > 0 {
 			data = data[p.quote(data):]
 			continue
-		}
-
-		// aside:
-		//
-		// A> The proof is too large to fit
-		// A> in the margin.
-		if p.extensions&Mmark != 0 {
-			if p.asidePrefix(data) > 0 {
-				data = data[p.aside(data):]
-				continue
-			}
-		}
-
-		// figure block:
-		//
-		// !---
-		// ![Alt Text](img.jpg "This is an image")
-		// ![Alt Text](img2.jpg "This is a second image")
-		// !---
-		if p.extensions&Mmark != 0 {
-			if i := p.figureBlock(data, true); i > 0 {
-				data = data[i:]
-				continue
-			}
-		}
-
-		// table:
-		//
-		// Name  | Age | Phone
-		// ------|-----|---------
-		// Bob   | 31  | 555-1234
-		// Alice | 27  | 555-4321
-		if p.extensions&Tables != 0 {
-			if i := p.table(data); i > 0 {
-				data = data[i:]
-				continue
-			}
-		}
-
-		// an itemized/unordered list:
-		//
-		// * Item 1
-		// * Item 2
-		//
-		// also works with + or -
-		if p.uliPrefix(data) > 0 {
-			data = data[p.list(data, 0, 0):]
-			continue
-		}
-
-		// a numbered/ordered list:
-		//
-		// 1. Item 1
-		// 2. Item 2
-		if i := p.oliPrefix(data); i > 0 {
-			start := 0
-			if i > 2 && p.extensions&OrderedListStart != 0 {
-				s := string(data[:i-2])
-				start, _ = strconv.Atoi(s)
-				if start == 1 {
-					start = 0
-				}
-			}
-			data = data[p.list(data, ast.ListTypeOrdered, start):]
-			continue
-		}
-
-		// definition lists:
-		//
-		// Term 1
-		// :   Definition a
-		// :   Definition b
-		//
-		// Term 2
-		// :   Definition c
-		if p.extensions&DefinitionLists != 0 {
-			if p.dliPrefix(data) > 0 {
-				data = data[p.list(data, ast.ListTypeDefinition, 0):]
-				continue
-			}
-		}
-
-		if p.extensions&MathJax != 0 {
-			if i := p.blockMath(data); i > 0 {
-				data = data[i:]
-				continue
-			}
-		}
-
-		// document matters:
-		//
-		// {frontmatter}/{mainmatter}/{backmatter}
-		if p.extensions&Mmark != 0 {
-			if i := p.documentMatter(data); i > 0 {
-				data = data[i:]
-				continue
-			}
 		}
 
 		// anything else must look like a normal paragraph
@@ -389,23 +177,6 @@ func (p *Parser) prefixHeading(data []byte) int {
 	end := skipUntilChar(data, i, '\n')
 	skip := end
 	id := ""
-	if p.extensions&HeadingIDs != 0 {
-		j, k := 0, 0
-		// find start/end of heading id
-		for j = i; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
-		}
-		for k = j + 1; k < end && data[k] != '}'; k++ {
-		}
-		// extract heading id iff found
-		if j < end && k < end {
-			id = string(data[j+2 : k])
-			end = j
-			skip = k + 1
-			for end > 0 && data[end-1] == ' ' {
-				end--
-			}
-		}
-	}
 	for end > 0 && data[end-1] == '#' {
 		if isBackslashEscaped(data, end-1) {
 			break
@@ -430,9 +201,6 @@ func (p *Parser) prefixHeading(data []byte) int {
 }
 
 func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
-	if p.extensions|Mmark == 0 {
-		return false
-	}
 	if len(data) < 4 {
 		return false
 	}
@@ -938,12 +706,6 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 		}
 		codeBlock.Content = work.Bytes() // TODO: get rid of temp buffer
 
-		if p.extensions&Mmark == 0 {
-			p.addBlock(codeBlock)
-			finalizeCodeBlock(codeBlock)
-			return beg
-		}
-
 		// Check for caption and if found make it a figure.
 		if captionContent, id, consumed := p.caption(data[beg:], []byte("Figure: ")); consumed > 0 {
 			figure := &ast.CaptionFigure{}
@@ -1305,13 +1067,6 @@ func (p *Parser) quote(data []byte) int {
 		// this line is part of the blockquote
 		raw.Write(data[beg:end])
 		beg = end
-	}
-
-	if p.extensions&Mmark == 0 {
-		block := p.addBlock(&ast.BlockQuote{})
-		p.block(raw.Bytes())
-		p.finalize(block)
-		return end
 	}
 
 	if captionContent, id, consumed := p.caption(data[end:], []byte("Quote: ")); consumed > 0 {
@@ -1815,14 +1570,6 @@ func (p *Parser) paragraph(data []byte) int {
 
 		// did we find a blank line marking the end of the paragraph?
 		if n := p.isEmpty(current); n > 0 {
-			// did this blank line followed by a definition list item?
-			if p.extensions&DefinitionLists != 0 {
-				if i < len(data)-1 && data[i+1] == ':' {
-					listLen := p.list(data[prev:], ast.ListTypeDefinition, 0)
-					return prev + listLen
-				}
-			}
-
 			p.renderParagraph(data[:i])
 			return i + n
 		}
@@ -1859,51 +1606,9 @@ func (p *Parser) paragraph(data []byte) int {
 			}
 		}
 
-		// if the next line starts a block of HTML, then the paragraph ends here
-		if p.extensions&LaxHTMLBlocks != 0 {
-			if data[i] == '<' && p.html(current, false) > 0 {
-				// rewind to before the HTML block
-				p.renderParagraph(data[:i])
-				return i
-			}
-		}
-
-		// if there's a prefixed heading or a horizontal rule after this, paragraph is over
-		if p.isPrefixHeading(current) || p.isPrefixSpecialHeading(current) || p.isHRule(current) {
-			p.renderParagraph(data[:i])
-			return i
-		}
-
 		// if there's a fenced code block, paragraph is over
 		if p.extensions&FencedCode != 0 {
 			if p.fencedCodeBlock(current, false) > 0 {
-				p.renderParagraph(data[:i])
-				return i
-			}
-		}
-
-		// if there's a figure block, paragraph is over
-		if p.extensions&Mmark != 0 {
-			if p.figureBlock(current, false) > 0 {
-				p.renderParagraph(data[:i])
-				return i
-			}
-		}
-
-		// if there's a definition list item, prev line is a definition term
-		if p.extensions&DefinitionLists != 0 {
-			if p.dliPrefix(current) != 0 {
-				ret := p.list(data[prev:], ast.ListTypeDefinition, 0)
-				return ret + prev
-			}
-		}
-
-		// if there's a list after this, paragraph is over
-		if p.extensions&NoEmptyLineBeforeBlock != 0 {
-			if p.uliPrefix(current) != 0 ||
-				p.oliPrefix(current) != 0 ||
-				p.quotePrefix(current) != 0 ||
-				p.codePrefix(current) != 0 {
 				p.renderParagraph(data[:i])
 				return i
 			}

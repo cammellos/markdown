@@ -25,7 +25,7 @@ func (p *Parser) Inline(currBlock ast.Node, data []byte) {
 	if len(data) == 0 {
 		return
 	}
-	if p.nesting >= p.maxNesting || len(data) == 0 {
+	if p.nesting >= p.maxNesting {
 		ast.AppendChild(currBlock, newTextNode(data))
 		return
 	}
