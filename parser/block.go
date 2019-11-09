@@ -91,55 +91,9 @@ func sanitizeAnchorName(text string) string {
 // the input buffer ends with a newline.
 func (p *Parser) block(data []byte) {
 	// this is called recursively: enforce a maximum depth
-	if p.nesting >= p.maxNesting {
-		// just assume is a paragraph and be done with it
-		p.renderParagraph(data)
-		return
+	p.renderParagraph(data)
+	return
 
-	}
-	p.nesting++
-
-	// parse out one block-level construct at a time
-	for len(data) > 0 {
-		// blank lines.  note: returns the # of bytes to skip
-		if i := p.isEmpty(data); i > 0 {
-			data = data[i:]
-			continue
-		}
-
-		// fenced code block:
-		//
-		// ``` go
-		// func fact(n int) int {
-		//     if n <= 1 {
-		//         return n
-		//     }
-		//     return n * fact(n-1)
-		// }
-		// ```
-		if p.extensions&FencedCode != 0 {
-			if i := p.fencedCodeBlock(data, true); i > 0 {
-				data = data[i:]
-				continue
-			}
-		}
-
-		// block quote:
-		//
-		// > A big quote I found somewhere
-		// > on the web
-		if p.quotePrefix(data) > 0 {
-			data = data[p.quote(data):]
-			continue
-		}
-
-		// anything else must look like a normal paragraph
-		// note: this finds underlined headings, too
-		idx := p.paragraph(data)
-		data = data[idx:]
-	}
-
-	p.nesting--
 }
 
 func (p *Parser) addBlock(n ast.Node) ast.Node {
