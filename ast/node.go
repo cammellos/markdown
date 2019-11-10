@@ -89,13 +89,11 @@ func (c *Container) MarshalJSON() ([]byte, error) {
 	type ContainerJSON struct {
 		Children []Node `json:"children"`
 		Literal  string `json:"literal"`
-		Content  string `json:"content"`
 		*Attribute
 	}
 	var c1 ContainerJSON
 	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
 	c1.Attribute = c.Attribute
 
 	return json.Marshal(&c1)
@@ -145,13 +143,9 @@ type Leaf struct {
 func (c *Leaf) MarshalJSON() ([]byte, error) {
 	type LeafJSON struct {
 		Literal string `json:"literal"`
-		Content string `json:"content"`
-		*Attribute
 	}
 	var c1 LeafJSON
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
-	c1.Attribute = c.Attribute
 
 	return json.Marshal(&c1)
 }
@@ -209,14 +203,11 @@ func (c *BlockQuote) MarshalJSON() ([]byte, error) {
 		Type     string `json:"type"`
 		Children []Node `json:"children"`
 		Literal  string `json:"literal"`
-		Content  string `json:"content"`
 		*Attribute
 	}
 	var c1 BlockQuoteJSON
 	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
-	c1.Attribute = c.Attribute
 	c1.Type = "blockquote"
 
 	return json.Marshal(&c1)
@@ -282,7 +273,6 @@ func (c *Heading) MarshalJSON() ([]byte, error) {
 		Type         string `json:"type"`
 		Children     []Node `json:"children"`
 		Literal      string `json:"literal"`
-		Content      string `json:"content"`
 		Level        int    `json:"level"`
 		IsTitleblock bool   `json:"isTitleBlock"`
 
@@ -291,7 +281,6 @@ func (c *Heading) MarshalJSON() ([]byte, error) {
 	var c1 HeadingJSON
 	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
 	c1.Attribute = c.Attribute
 	c1.Type = "heading"
 	c1.Level = c.Level
@@ -316,16 +305,30 @@ func (c *Emph) MarshalJSON() ([]byte, error) {
 		Type     string `json:"type"`
 		Children []Node `json:"children"`
 		Literal  string `json:"literal"`
-		Content  string `json:"content"`
 		*Attribute
 	}
 	var c1 EmphJSON
 	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
 	c1.Attribute = c.Attribute
 	c1.Type = "emph"
 
+	return json.Marshal(&c1)
+}
+
+type StatusTag struct {
+	Leaf
+	Destination []byte
+}
+
+func (c *StatusTag) MarshalJSON() ([]byte, error) {
+	type StatusTagJSON struct {
+		Type        string `json:"type"`
+		Destination string `json:"destination"`
+	}
+	var c1 StatusTagJSON
+	c1.Destination = string(c.Destination)
+	c1.Type = "status-tag"
 	return json.Marshal(&c1)
 }
 
@@ -339,13 +342,11 @@ func (c *Strong) MarshalJSON() ([]byte, error) {
 		Type     string `json:"type"`
 		Children []Node `json:"children"`
 		Literal  string `json:"literal"`
-		Content  string `json:"content"`
 		*Attribute
 	}
 	var c1 StrongJSON
 	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
 	c1.Attribute = c.Attribute
 	c1.Type = "strong"
 
@@ -373,7 +374,6 @@ func (c *Link) MarshalJSON() ([]byte, error) {
 		Type        string `json:"type"`
 		Children    []Node `json:"children"`
 		Literal     string `json:"literal"`
-		Content     string `json:"content"`
 		Title       string `json:"title"`
 		Destination string `json:"destination"`
 		*Attribute
@@ -381,7 +381,6 @@ func (c *Link) MarshalJSON() ([]byte, error) {
 	var c1 LinkJSON
 	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
 	c1.Attribute = c.Attribute
 	c1.Title = string(c.Title)
 	c1.Destination = string(c.Destination)
@@ -438,12 +437,10 @@ type CodeBlock struct {
 func (c *CodeBlock) MarshalJSON() ([]byte, error) {
 	type CodeBlockJSON struct {
 		Literal string `json:"literal"`
-		Content string `json:"content"`
 		*Attribute
 	}
 	var c1 CodeBlockJSON
 	c1.Literal = string(c.Literal)
-	c1.Content = string(c.Content)
 	c1.Attribute = c.Attribute
 
 	return json.Marshal(&c1)

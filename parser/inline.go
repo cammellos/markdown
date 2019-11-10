@@ -63,6 +63,38 @@ func (p *Parser) Inline(currBlock ast.Node, data []byte) {
 	p.nesting--
 }
 
+func statusTag(p *Parser, data []byte, offset int) (int, ast.Node) {
+	data = data[offset:]
+	n := len(data)
+
+	if n == 1 {
+		return 0, nil
+	}
+
+	// Space cannot follow tag
+	if isSpace(data[1]) {
+		return 0, nil
+	}
+
+	i := 1
+	for i < n {
+		if isValidStatusTagChar(data[i]) {
+			i++
+		} else {
+			break
+		}
+	}
+
+	if i == 1 {
+		return 0, nil
+	}
+
+	statusTag := &ast.StatusTag{
+		Destination: data[1:i],
+	}
+	return i + 1, statusTag
+}
+
 // single and double emphasis parsing
 func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
 	data = data[offset:]
@@ -608,25 +640,6 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	}
 }
 
-func (p *Parser) inlineHTMLComment(data []byte) int {
-	if len(data) < 5 {
-		return 0
-	}
-	if data[0] != '<' || data[1] != '!' || data[2] != '-' || data[3] != '-' {
-		return 0
-	}
-	i := 5
-	// scan for an end-of-comment marker, across lines if necessary
-	for i < len(data) && !(data[i-2] == '-' && data[i-1] == '-' && data[i] == '>') {
-		i++
-	}
-	// no end-of-comment marker
-	if i >= len(data) {
-		return 0
-	}
-	return i + 1
-}
-
 func stripMailto(link []byte) []byte {
 	if bytes.HasPrefix(link, []byte("mailto://")) {
 		return link[9:]
@@ -646,48 +659,6 @@ const (
 	normalAutolink
 	emailAutolink
 )
-
-// '<' when tags or autolinks are allowed
-func leftAngle(p *Parser, data []byte, offset int) (int, ast.Node) {
-	data = data[offset:]
-
-	if p.extensions&Mmark != 0 {
-		id, consumed := IsCallout(data)
-		if consumed > 0 {
-			node := &ast.Callout{}
-			node.ID = id
-			return consumed, node
-		}
-	}
-
-	altype, end := tagLength(data)
-	if size := p.inlineHTMLComment(data); size > 0 {
-		end = size
-	}
-	if end <= 2 {
-		return end, nil
-	}
-	if altype == notAutolink {
-		htmlTag := &ast.HTMLSpan{}
-		htmlTag.Literal = data[:end]
-		return end, htmlTag
-	}
-
-	var uLink bytes.Buffer
-	unescapeText(&uLink, data[1:end+1-2])
-	if uLink.Len() <= 0 {
-		return end, nil
-	}
-	link := uLink.Bytes()
-	node := &ast.Link{
-		Destination: link,
-	}
-	if altype == emailAutolink {
-		node.Destination = append([]byte("mailto:"), link...)
-	}
-	ast.AppendChild(node, newTextNode(stripMailto(link)))
-	return end, node
-}
 
 // '\\' backslash escape
 var escapeChars = []byte("\\`*_{}[]()#+-.!:|&<>~")
@@ -733,30 +704,6 @@ func unescapeText(ob *bytes.Buffer, src []byte) {
 		ob.WriteByte(src[i+1])
 		i += 2
 	}
-}
-
-// '&' escaped when it doesn't belong to an entity
-// valid entities are assumed to be anything matching &#?[A-Za-z0-9]+;
-func entity(p *Parser, data []byte, offset int) (int, ast.Node) {
-	data = data[offset:]
-
-	end := skipCharN(data, 1, '#', 1)
-	end = skipAlnum(data, end)
-
-	if end < len(data) && data[end] == ';' {
-		end++ // real entity
-	} else {
-		return 0, nil // lone '&'
-	}
-
-	ent := data[:end]
-	// undo &amp; escaping or it will be converted to &amp;amp; by another
-	// escaper in the renderer
-	if bytes.Equal(ent, []byte("&amp;")) {
-		ent = []byte{'&'}
-	}
-
-	return end, newTextNode(ent)
 }
 
 func linkEndsWithEntity(data []byte, linkEnd int) bool {

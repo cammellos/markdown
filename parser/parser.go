@@ -142,21 +142,14 @@ func NewWithExtensions(extension Extensions) *Parser {
 
 	p.inlineCallback[' '] = maybeLineBreak
 	p.inlineCallback['*'] = emphasis
+	p.inlineCallback['#'] = statusTag
 	p.inlineCallback['_'] = emphasis
 	if p.extensions&Strikethrough != 0 {
 		p.inlineCallback['~'] = emphasis
 	}
 	p.inlineCallback['`'] = codeSpan
 	p.inlineCallback['\n'] = lineBreak
-	p.inlineCallback['['] = link
-	p.inlineCallback['<'] = leftAngle
 	p.inlineCallback['\\'] = escape
-	p.inlineCallback['&'] = entity
-	p.inlineCallback['!'] = maybeImage
-	if p.extensions&Mmark != 0 {
-		p.inlineCallback['('] = maybeShortRefOrIndex
-	}
-	p.inlineCallback['^'] = maybeInlineFootnoteOrSuper
 	if p.extensions&Autolink != 0 {
 		p.inlineCallback['h'] = maybeAutoLink
 		p.inlineCallback['m'] = maybeAutoLink
@@ -164,9 +157,6 @@ func NewWithExtensions(extension Extensions) *Parser {
 		p.inlineCallback['H'] = maybeAutoLink
 		p.inlineCallback['M'] = maybeAutoLink
 		p.inlineCallback['F'] = maybeAutoLink
-	}
-	if p.extensions&MathJax != 0 {
-		p.inlineCallback['$'] = math
 	}
 
 	return &p
@@ -691,6 +681,10 @@ func isLetter(c byte) bool {
 // TODO: check when this is looking for ASCII alnum and when it should use unicode
 func isAlnum(c byte) bool {
 	return (c >= '0' && c <= '9') || isLetter(c)
+}
+
+func isValidStatusTagChar(c byte) bool {
+	return isAlnum(c) || c == '-'
 }
 
 // TODO: this is not used
