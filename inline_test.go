@@ -69,61 +69,64 @@ func testReferenceOverride(t *testing.T) {
 	})
 }
 
-func testStrong(t *testing.T) {
+func TestStrong(t *testing.T) {
 	var tests = []string{
 		"nothing inline\n",
-		"<p>nothing inline</p>\n",
+		"[{\"literal\":\"nothing inline\"}]",
 
 		"simple **inline** test\n",
-		"<p>simple <strong>inline</strong> test</p>\n",
+		"[{\"literal\":\"simple \"},{\"type\":\"strong\",\"literal\":\"inline\"},{\"literal\":\" test\"}]",
+
+		"simple ***triple*** test\n",
+		"[{\"literal\":\"simple \"},{\"type\":\"strong\",\"literal\":\"triple\"},{\"literal\":\" test\"}]",
 
 		"**at the** beginning\n",
-		"<p><strong>at the</strong> beginning</p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"at the\"},{\"literal\":\" beginning\"}]",
 
 		"at the **end**\n",
-		"<p>at the <strong>end</strong></p>\n",
+		"[{\"literal\":\"at the \"},{\"type\":\"strong\",\"literal\":\"end\"}]",
 
 		"**try two** in **one line**\n",
-		"<p><strong>try two</strong> in <strong>one line</strong></p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"try two\"},{\"literal\":\" in \"},{\"type\":\"strong\",\"literal\":\"one line\"}]",
 
 		"over **two\nlines** test\n",
-		"<p>over <strong>two\nlines</strong> test</p>\n",
+		"[{\"literal\":\"over \"},{\"type\":\"strong\",\"literal\":\"two\\nlines\"},{\"literal\":\" test\"}]",
 
 		"odd **number of** markers** here\n",
-		"<p>odd <strong>number of</strong> markers** here</p>\n",
+		"[{\"literal\":\"odd \"},{\"type\":\"strong\",\"literal\":\"number of\"},{\"literal\":\" markers** here\"}]",
 
 		"odd **number\nof** markers** here\n",
-		"<p>odd <strong>number\nof</strong> markers** here</p>\n",
+		"[{\"literal\":\"odd \"},{\"type\":\"strong\",\"literal\":\"number\\nof\"},{\"literal\":\" markers** here\"}]",
 
 		"simple __inline__ test\n",
-		"<p>simple <strong>inline</strong> test</p>\n",
+		"[{\"literal\":\"simple \"},{\"type\":\"strong\",\"literal\":\"inline\"},{\"literal\":\" test\"}]",
 
 		"__at the__ beginning\n",
-		"<p><strong>at the</strong> beginning</p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"at the\"},{\"literal\":\" beginning\"}]",
 
 		"at the __end__\n",
-		"<p>at the <strong>end</strong></p>\n",
+		"[{\"literal\":\"at the \"},{\"type\":\"strong\",\"literal\":\"end\"}]",
 
 		"__try two__ in __one line__\n",
-		"<p><strong>try two</strong> in <strong>one line</strong></p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"try two\"},{\"literal\":\" in \"},{\"type\":\"strong\",\"literal\":\"one line\"}]",
 
 		"over __two\nlines__ test\n",
-		"<p>over <strong>two\nlines</strong> test</p>\n",
+		"[{\"literal\":\"over \"},{\"type\":\"strong\",\"literal\":\"two\\nlines\"},{\"literal\":\" test\"}]",
 
 		"odd __number of__ markers__ here\n",
-		"<p>odd <strong>number of</strong> markers__ here</p>\n",
+		"[{\"literal\":\"odd \"},{\"type\":\"strong\",\"literal\":\"number of\"},{\"literal\":\" markers__ here\"}]",
 
 		"odd __number\nof__ markers__ here\n",
-		"<p>odd <strong>number\nof</strong> markers__ here</p>\n",
+		"[{\"literal\":\"odd \"},{\"type\":\"strong\",\"literal\":\"number\\nof\"},{\"literal\":\" markers__ here\"}]",
 
 		"mix of **markers__\n",
-		"<p>mix of **markers__</p>\n",
+		"[{\"literal\":\"mix of **markers__\"}]",
 
 		"**`/usr`** : this folder is named `usr`\n",
-		"<p><strong><code>/usr</code></strong> : this folder is named <code>usr</code></p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" : this folder is named \"},{\"literal\":\"usr\"}]",
 
 		"**`/usr`** :\n\n this folder is named `usr`\n",
-		"<p><strong><code>/usr</code></strong> :</p>\n\n<p>this folder is named <code>usr</code></p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" :\\n\\n this folder is named \"},{\"literal\":\"usr\"}]",
 	}
 	doTestsInline(t, tests)
 }

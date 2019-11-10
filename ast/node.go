@@ -332,18 +332,16 @@ func (c *StatusTag) MarshalJSON() ([]byte, error) {
 
 // Strong represents markdown strong node
 type Strong struct {
-	Container
+	Leaf
 }
 
 func (c *Strong) MarshalJSON() ([]byte, error) {
 	type StrongJSON struct {
-		Type     string `json:"type"`
-		Children []Node `json:"children"`
-		Literal  string `json:"literal"`
+		Type    string `json:"type"`
+		Literal string `json:"literal"`
 		*Attribute
 	}
 	var c1 StrongJSON
-	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
 	c1.Attribute = c.Attribute
 	c1.Type = "strong"
@@ -353,7 +351,7 @@ func (c *Strong) MarshalJSON() ([]byte, error) {
 
 // Del represents markdown del node
 type Del struct {
-	Container
+	Leaf
 }
 
 // Link represents markdown link node
