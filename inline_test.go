@@ -123,18 +123,18 @@ func TestStrong(t *testing.T) {
 		"[{\"literal\":\"mix of **markers__\"}]",
 
 		"**`/usr`** : this folder is named `usr`\n",
-		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" : this folder is named \"},{\"literal\":\"usr\"}]",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" : this folder is named \"},{\"type\":\"code\",\"literal\":\"usr\"}]",
 
 		"**`/usr`** :\n\n this folder is named `usr`\n",
-		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" :\\n\\n this folder is named \"},{\"literal\":\"usr\"}]",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" :\\n\\n this folder is named \"},{\"type\":\"code\",\"literal\":\"usr\"}]",
 	}
 	doTestsInline(t, tests)
 }
 
-func testStrongShort(t *testing.T) {
+func TestStrongShort(t *testing.T) {
 	var tests = []string{
 		"**`/usr`** :\n\n this folder is named `usr`\n",
-		"<p><strong><code>/usr</code></strong> :</p>\n\n<p>this folder is named <code>usr</code></p>\n",
+		"[{\"literal\":\"\"},{\"type\":\"strong\",\"literal\":\"`/usr`\"},{\"literal\":\" :\\n\\n this folder is named \"},{\"type\":\"code\",\"literal\":\"usr\"}]",
 	}
 	doTestsInline(t, tests)
 

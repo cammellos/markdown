@@ -432,11 +432,13 @@ type CodeBlock struct {
 
 func (c *CodeBlock) MarshalJSON() ([]byte, error) {
 	type CodeBlockJSON struct {
+		Type    string `json:"type"`
 		Literal string `json:"literal"`
 		*Attribute
 	}
 	var c1 CodeBlockJSON
 	c1.Literal = string(c.Literal)
+	c1.Type = "codeblock"
 	c1.Attribute = c.Attribute
 
 	return json.Marshal(&c1)
@@ -461,6 +463,18 @@ type NonBlockingSpace struct {
 // Code represents markdown code node
 type Code struct {
 	Leaf
+}
+
+func (c *Code) MarshalJSON() ([]byte, error) {
+	type CodeJSON struct {
+		Type    string `json:"type"`
+		Literal string `json:"literal"`
+	}
+	var c1 CodeJSON
+	c1.Literal = string(c.Literal)
+	c1.Type = "code"
+
+	return json.Marshal(&c1)
 }
 
 // HTMLSpan represents markdown html span node
