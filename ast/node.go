@@ -297,18 +297,16 @@ type HorizontalRule struct {
 
 // Emph represents markdown emphasis node
 type Emph struct {
-	Container
+	Leaf
 }
 
 func (c *Emph) MarshalJSON() ([]byte, error) {
 	type EmphJSON struct {
-		Type     string `json:"type"`
-		Children []Node `json:"children"`
-		Literal  string `json:"literal"`
+		Type    string `json:"type"`
+		Literal string `json:"literal"`
 		*Attribute
 	}
 	var c1 EmphJSON
-	c1.Children = c.Children
 	c1.Literal = string(c.Literal)
 	c1.Attribute = c.Attribute
 	c1.Type = "emph"

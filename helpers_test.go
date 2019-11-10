@@ -2,8 +2,8 @@ package markdown
 
 import (
 	"bytes"
-	"encoding/json"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/gomarkdown/markdown/parser"
@@ -18,7 +18,7 @@ func runMarkdown(input string, params TestParams) (string, error) {
 	parser := parser.NewWithExtensions(params.extensions)
 	parser.ReferenceOverride = params.referenceOverride
 	result := parser.Parse([]byte(input))
-	output, err := json.Marshal(result)
+	output, err := ToJSON(result)
 	return string(output), err
 }
 
@@ -38,7 +38,7 @@ func doTestsBlock(t *testing.T, tests []string, extensions parser.Extensions) {
 func doTestsParam(t *testing.T, tests []string, params TestParams) {
 	for i := 0; i+1 < len(tests); i += 2 {
 		input := tests[i]
-		expected := tests[i+1]
+		expected := strings.TrimRight(tests[i+1], "\n")
 		got, err := runMarkdown(input, params)
 		if err != nil {
 			t.Errorf("Failed to marshal json: %+v\n", err)

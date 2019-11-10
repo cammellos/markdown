@@ -11,7 +11,65 @@ func TestEmphasis(t *testing.T) {
 	doTestsInlineParam(t, tests, TestParams{})
 }
 
-func TestStrong(t *testing.T) {
+func testReferenceOverride(t *testing.T) {
+	var tests = []string{
+		"test [ref1][]\n",
+		"<p>test <a href=\"http://www.ref1.com/\" title=\"Reference 1\">ref1</a></p>\n",
+
+		"test [my ref][ref1]\n",
+		"<p>test <a href=\"http://www.ref1.com/\" title=\"Reference 1\">my ref</a></p>\n",
+
+		"test [ref2][]\n\n[ref2]: http://www.leftalone.com/ (Ref left alone)\n",
+		"<p>test <a href=\"http://www.overridden.com/\" title=\"Reference Overridden\">ref2</a></p>\n",
+
+		"test [ref3][]\n\n[ref3]: http://www.leftalone.com/ (Ref left alone)\n",
+		"<p>test <a href=\"http://www.leftalone.com/\" title=\"Ref left alone\">ref3</a></p>\n",
+
+		"test [ref4][]\n\n[ref4]: http://zombo.com/ (You can do anything)\n",
+		"<p>test [ref4][]</p>\n",
+
+		"test [!(*http.ServeMux).ServeHTTP][] complicated ref\n",
+		"<p>test <a href=\"http://localhost:6060/pkg/net/http/#ServeMux.ServeHTTP\" title=\"ServeHTTP docs\">!(*http.ServeMux).ServeHTTP</a> complicated ref</p>\n",
+
+		"test [ref5][]\n",
+		"<p>test <a href=\"http://www.ref5.com/\" title=\"Reference 5\">Moo</a></p>\n",
+	}
+	doTestsInlineParam(t, tests, TestParams{
+		referenceOverride: func(reference string) (rv *parser.Reference, overridden bool) {
+			switch reference {
+			case "ref1":
+				// just an overridden reference exists without definition
+				return &parser.Reference{
+					Link:  "http://www.ref1.com/",
+					Title: "Reference 1"}, true
+			case "ref2":
+				// overridden exists and reference defined
+				return &parser.Reference{
+					Link:  "http://www.overridden.com/",
+					Title: "Reference Overridden"}, true
+			case "ref3":
+				// not overridden and reference defined
+				return nil, false
+			case "ref4":
+				// overridden missing and defined
+				return nil, true
+			case "!(*http.ServeMux).ServeHTTP":
+				return &parser.Reference{
+					Link:  "http://localhost:6060/pkg/net/http/#ServeMux.ServeHTTP",
+					Title: "ServeHTTP docs"}, true
+			case "ref5":
+				return &parser.Reference{
+					Link:  "http://www.ref5.com/",
+					Title: "Reference 5",
+					Text:  "Moo",
+				}, true
+			}
+			return nil, false
+		},
+	})
+}
+
+func testStrong(t *testing.T) {
 	var tests = []string{
 		"nothing inline\n",
 		"<p>nothing inline</p>\n",
@@ -70,7 +128,7 @@ func TestStrong(t *testing.T) {
 	doTestsInline(t, tests)
 }
 
-func TestStrongShort(t *testing.T) {
+func testStrongShort(t *testing.T) {
 	var tests = []string{
 		"**`/usr`** :\n\n this folder is named `usr`\n",
 		"<p><strong><code>/usr</code></strong> :</p>\n\n<p>this folder is named <code>usr</code></p>\n",
@@ -78,7 +136,7 @@ func TestStrongShort(t *testing.T) {
 	doTestsInline(t, tests)
 
 }
-func TestEmphasisMix(t *testing.T) {
+func testEmphasisMix(t *testing.T) {
 	var tests = []string{
 		"***triple emphasis***\n",
 		"<p><strong><em>triple emphasis</em></strong></p>\n",
@@ -107,7 +165,7 @@ func TestEmphasisMix(t *testing.T) {
 	doTestsInline(t, tests)
 }
 
-func TestEmphasisLink(t *testing.T) {
+func testEmphasisLink(t *testing.T) {
 	var tests = []string{
 		"[first](before) *text[second] (inside)text* [third](after)\n",
 		"<p><a href=\"before\">first</a> <em>text<a href=\"inside\">second</a>text</em> <a href=\"after\">third</a></p>\n",
@@ -124,7 +182,7 @@ func TestEmphasisLink(t *testing.T) {
 	doTestsInline(t, tests)
 }
 
-func TestStrikeThrough(t *testing.T) {
+func testStrikeThrough(t *testing.T) {
 	var tests = []string{
 		"nothing inline\n",
 		"<p>nothing inline</p>\n",
@@ -153,7 +211,7 @@ func TestStrikeThrough(t *testing.T) {
 	doTestsInline(t, tests)
 }
 
-func TestCodeSpan(t *testing.T) {
+func testCodeSpan(t *testing.T) {
 	var tests = []string{
 		"`source code`\n",
 		"<p><code>source code</code></p>\n",
@@ -191,7 +249,7 @@ func TestCodeSpan(t *testing.T) {
 	doTestsInline(t, tests)
 }
 
-func TestLineBreak(t *testing.T) {
+func testLineBreak(t *testing.T) {
 	var tests = []string{
 		"this line  \nhas a break\n",
 		"<p>this line<br />\nhas a break</p>\n",
@@ -230,7 +288,7 @@ func TestLineBreak(t *testing.T) {
 		extensions: parser.BackslashLineBreak})
 }
 
-func TestInlineLink(t *testing.T) {
+func testInlineLink(t *testing.T) {
 	var tests = []string{
 		"[foo](/bar/)\n",
 		"<p><a href=\"/bar/\">foo</a></p>\n",
@@ -347,7 +405,7 @@ func TestInlineLink(t *testing.T) {
 
 }
 
-func TestHrefTargetBlank(t *testing.T) {
+func testHrefTargetBlank(t *testing.T) {
 	var tests = []string{
 		// internal link
 		"[foo](/bar/)\n",
@@ -374,7 +432,7 @@ func TestHrefTargetBlank(t *testing.T) {
 	doTestsInlineParam(t, tests, TestParams{})
 }
 
-func TestSafeInlineLink(t *testing.T) {
+func testSafeInlineLink(t *testing.T) {
 	var tests = []string{
 		"[foo](/bar/)\n",
 		"<p><a href=\"/bar/\">foo</a></p>\n",
@@ -407,7 +465,7 @@ func TestSafeInlineLink(t *testing.T) {
 	doSafeTestsInline(t, tests)
 }
 
-func TestReferenceLink(t *testing.T) {
+func testReferenceLink(t *testing.T) {
 	var tests = []string{
 		"[link][ref]\n",
 		"<p>[link][ref]</p>\n",
@@ -445,7 +503,7 @@ func TestReferenceLink(t *testing.T) {
 	doLinkTestsInline(t, tests)
 }
 
-func TestTags(t *testing.T) {
+func testTags(t *testing.T) {
 	var tests = []string{
 		"a <span>tag</span>\n",
 		"<p>a <span>tag</span></p>\n",
@@ -462,7 +520,7 @@ func TestTags(t *testing.T) {
 	doTestsInline(t, tests)
 }
 
-func TestAutoLink(t *testing.T) {
+func testAutoLink(t *testing.T) {
 	var tests = []string{
 		"http://foo.com/\n",
 		"<p><a href=\"http://foo.com/\">http://foo.com/</a></p>\n",
@@ -788,7 +846,7 @@ what happens here
 `,
 }
 
-func TestSmartDoubleQuotes(t *testing.T) {
+func testSmartDoubleQuotes(t *testing.T) {
 	var tests = []string{
 		"this should be normal \"quoted\" text.\n",
 		"<p>this should be normal &ldquo;quoted&rdquo; text.</p>\n",
@@ -800,7 +858,7 @@ func TestSmartDoubleQuotes(t *testing.T) {
 	doTestsInlineParam(t, tests, TestParams{})
 }
 
-func TestSmartDoubleQuotesNBSP(t *testing.T) {
+func testSmartDoubleQuotesNBSP(t *testing.T) {
 	var tests = []string{
 		"this should be normal \"quoted\" text.\n",
 		"<p>this should be normal &ldquo;&nbsp;quoted&nbsp;&rdquo; text.</p>\n",
@@ -812,7 +870,7 @@ func TestSmartDoubleQuotesNBSP(t *testing.T) {
 	doTestsInlineParam(t, tests, TestParams{})
 }
 
-func TestSmartAngledDoubleQuotes(t *testing.T) {
+func testSmartAngledDoubleQuotes(t *testing.T) {
 	var tests = []string{
 		"this should be angled \"quoted\" text.\n",
 		"<p>this should be angled &laquo;quoted&raquo; text.</p>\n",
@@ -824,7 +882,7 @@ func TestSmartAngledDoubleQuotes(t *testing.T) {
 	doTestsInlineParam(t, tests, TestParams{})
 }
 
-func TestDisableSmartDashes(t *testing.T) {
+func testDisableSmartDashes(t *testing.T) {
 	doTestsInlineParam(t, []string{
 		"foo - bar\n",
 		"<p>foo - bar</p>\n",
@@ -859,7 +917,7 @@ func TestDisableSmartDashes(t *testing.T) {
 	}, TestParams{})
 }
 
-func TestSkipLinks(t *testing.T) {
+func testSkipLinks(t *testing.T) {
 	doTestsInlineParam(t, []string{
 		"[foo](gopher://foo.bar)",
 		"<p><tt>foo</tt></p>\n",
@@ -869,14 +927,14 @@ func TestSkipLinks(t *testing.T) {
 	}, TestParams{})
 }
 
-func TestSkipImages(t *testing.T) {
+func testSkipImages(t *testing.T) {
 	doTestsInlineParam(t, []string{
 		"![foo](/bar/)\n",
 		"<p></p>\n",
 	}, TestParams{})
 }
 
-func TestUseXHTML(t *testing.T) {
+func testUseXHTML(t *testing.T) {
 	doTestsParam(t, []string{
 		"---",
 		"<hr>\n",
@@ -887,7 +945,7 @@ func TestUseXHTML(t *testing.T) {
 	}, TestParams{})
 }
 
-func TestSkipHTML(t *testing.T) {
+func testSkipHTML(t *testing.T) {
 	doTestsParam(t, []string{
 		"<div class=\"foo\"></div>\n\ntext\n\n<form>the form</form>",
 		"<p>text</p>\n\n<p>the form</p>\n",

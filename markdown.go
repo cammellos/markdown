@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 
 	"github.com/gomarkdown/markdown/ast"
@@ -63,4 +64,12 @@ func Render(doc ast.Node, renderer Renderer) []byte {
 	})
 	renderer.RenderFooter(&buf, doc)
 	return buf.Bytes()
+}
+
+func ToJSON(doc ast.Node) ([]byte, error) {
+	children := doc.GetChildren()
+	if len(children) != 0 && len(children[0].GetChildren()) != 0 {
+		return json.Marshal(children[0].GetChildren())
+	}
+	return nil, nil
 }

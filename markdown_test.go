@@ -14,12 +14,12 @@ func TestDocument(t *testing.T) {
 		// This shouldn't panic.
 		// https://github.com/russross/blackfriday/issues/172
 		"[]:<",
-		"<p>[]:&lt;</p>\n",
+		"[{\"literal\":\"[]:\\u003c\"}]",
 
 		// This shouldn't panic.
 		// https://github.com/russross/blackfriday/issues/173
 		"   [",
-		"<p>[</p>\n",
+		"[{\"literal\":\"[\"}]",
 	}
 	doTests(t, tests)
 }

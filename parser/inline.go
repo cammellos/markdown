@@ -1126,7 +1126,7 @@ func helperEmphasis(p *Parser, data []byte, c byte) (int, ast.Node) {
 			}
 
 			emph := &ast.Emph{}
-			p.Inline(emph, data[:i])
+			emph.Literal = data[:i]
 			return i + 1, emph
 		}
 	}
@@ -1179,8 +1179,8 @@ func helperTripleEmphasis(p *Parser, data []byte, offset int, c byte) (int, ast.
 			// triple symbol found
 			strong := &ast.Strong{}
 			em := &ast.Emph{}
+			em.Literal = data[:i]
 			ast.AppendChild(strong, em)
-			p.Inline(em, data[:i])
 			return i + 3, strong
 		case i+1 < len(data) && data[i+1] == c:
 			// double symbol found, hand over to emph1
