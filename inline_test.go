@@ -11,6 +11,11 @@ func TestEmphasis(t *testing.T) {
 	doTestsInlineParam(t, tests, TestParams{})
 }
 
+func TestStatusTag(t *testing.T) {
+	tests := readTestFile2(t, "status_tag.test")
+	doTestsInlineParam(t, tests, TestParams{})
+}
+
 func testReferenceOverride(t *testing.T) {
 	var tests = []string{
 		"test [ref1][]\n",

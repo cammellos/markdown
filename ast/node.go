@@ -185,6 +185,14 @@ type Document struct {
 	Container
 }
 
+func (doc *Document) MarshalJSON() ([]byte, error) {
+	children := doc.GetChildren()
+	if len(children) != 0 && len(children[0].GetChildren()) != 0 {
+		return json.Marshal(children[0].GetChildren())
+	}
+	return []byte("[]"), nil
+}
+
 // DocumentMatter represents markdown node that signals a document
 // division: frontmatter, mainmatter or backmatter.
 type DocumentMatter struct {
@@ -316,16 +324,15 @@ func (c *Emph) MarshalJSON() ([]byte, error) {
 
 type StatusTag struct {
 	Leaf
-	Destination []byte
 }
 
 func (c *StatusTag) MarshalJSON() ([]byte, error) {
 	type StatusTagJSON struct {
-		Type        string `json:"type"`
-		Destination string `json:"destination"`
+		Type    string `json:"type"`
+		Literal string `json:"literal"`
 	}
 	var c1 StatusTagJSON
-	c1.Destination = string(c.Destination)
+	c1.Literal = string(c.Literal)
 	c1.Type = "status-tag"
 	return json.Marshal(&c1)
 }

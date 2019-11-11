@@ -78,21 +78,23 @@ func statusTag(p *Parser, data []byte, offset int) (int, ast.Node) {
 
 	i := 1
 	for i < n {
-		if isValidStatusTagChar(data[i]) {
-			i++
-		} else {
+		if isSpace(data[i]) {
 			break
 		}
+		if !isValidStatusTagChar(data[i]) {
+			return 0, nil
+		}
+		i++
 	}
 
 	if i == 1 {
 		return 0, nil
 	}
 
-	statusTag := &ast.StatusTag{
-		Destination: data[1:i],
-	}
-	return i + 1, statusTag
+	statusTag := &ast.StatusTag{}
+	statusTag.Literal = data[1:i]
+
+	return i, statusTag
 }
 
 // single and double emphasis parsing

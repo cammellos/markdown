@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"bytes"
+	"encoding/json"
 	"regexp"
 	"strings"
 	"testing"
@@ -18,7 +19,10 @@ func runMarkdown(input string, params TestParams) (string, error) {
 	parser := parser.NewWithExtensions(params.extensions)
 	parser.ReferenceOverride = params.referenceOverride
 	result := parser.Parse([]byte(input))
-	output, err := ToJSON(result)
+	if result == nil {
+		return "", nil
+	}
+	output, err := json.Marshal(result)
 	return string(output), err
 }
 

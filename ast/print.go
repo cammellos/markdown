@@ -117,7 +117,7 @@ func printRecur(w io.Writer, node Node, prefix string, depth int) {
 		content := "url=" + string(v.Destination)
 		printDefault(w, indent, typeName, content)
 	case *StatusTag:
-		content := "destination=" + string(v.Destination)
+		content := "tag=" + string(v.Literal)
 		printDefault(w, indent, typeName, content)
 	case *Image:
 		content := "url=" + string(v.Destination)
