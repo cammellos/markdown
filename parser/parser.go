@@ -262,16 +262,13 @@ func (p *Parser) Parse(input []byte) ast.Node {
 	// Walk the tree again and process inline markdown in each block
 	ast.WalkFunc(p.Doc, func(node ast.Node, entering bool) ast.WalkStatus {
 		switch node.(type) {
-		case *ast.Paragraph, *ast.Heading, *ast.TableCell:
+		case *ast.Paragraph:
 			p.Inline(node, node.AsContainer().Content)
 			node.AsContainer().Content = nil
 		}
 		return ast.GoToNext
 	})
 
-	if p.Opts.Flags&SkipFootnoteList == 0 {
-		p.parseRefsToAST()
-	}
 	return p.Doc
 }
 

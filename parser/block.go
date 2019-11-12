@@ -91,7 +91,26 @@ func sanitizeAnchorName(text string) string {
 // the input buffer ends with a newline.
 func (p *Parser) block(data []byte) {
 	// this is called recursively: enforce a maximum depth
-	p.renderParagraph(data)
+	for len(data) > 0 {
+		if p.isPrefixHeading(data) {
+			data = data[p.prefixHeading(data):]
+			continue
+		}
+
+		if i := p.fencedCodeBlock(data, true); i > 0 {
+			data = data[i:]
+			continue
+		}
+
+		if p.quotePrefix(data) > 0 {
+			data = data[p.quote(data):]
+			continue
+		}
+
+		idx := p.paragraph(data)
+		data = data[idx:]
+	}
+	//p.renderParagraph(data)
 	return
 
 }
@@ -112,17 +131,7 @@ func (p *Parser) addBlock(n ast.Node) ast.Node {
 }
 
 func (p *Parser) isPrefixHeading(data []byte) bool {
-	if data[0] != '#' {
-		return false
-	}
-
-	if p.extensions&SpaceHeadings != 0 {
-		level := skipCharN(data, 0, '#', 6)
-		if level == len(data) || data[level] != ' ' {
-			return false
-		}
-	}
-	return true
+	return len(data) > 1 && data[0] == '#' && isSpace(data[1])
 }
 
 func (p *Parser) prefixHeading(data []byte) int {
@@ -130,7 +139,6 @@ func (p *Parser) prefixHeading(data []byte) int {
 	i := skipChar(data, level, ' ')
 	end := skipUntilChar(data, i, '\n')
 	skip := end
-	id := ""
 	for end > 0 && data[end-1] == '#' {
 		if isBackslashEscaped(data, end-1) {
 			break
@@ -141,14 +149,10 @@ func (p *Parser) prefixHeading(data []byte) int {
 		end--
 	}
 	if end > i {
-		if id == "" && p.extensions&AutoHeadingIDs != 0 {
-			id = sanitizeAnchorName(string(data[i:end]))
-		}
 		block := &ast.Heading{
-			HeadingID: id,
-			Level:     level,
+			Level: level,
 		}
-		block.Content = data[i:end]
+		block.Literal = data[i:end]
 		p.addBlock(block)
 	}
 	return skip
@@ -805,13 +809,6 @@ func (p *Parser) quote(data []byte) int {
 		// fenced code and if one's found, incorporate it altogether,
 		// irregardless of any contents inside it
 		for end < len(data) && data[end] != '\n' {
-			if p.extensions&FencedCode != 0 {
-				if i := p.fencedCodeBlock(data[end:], false); i > 0 {
-					// -1 to compensate for the extra end++ after the loop:
-					end += i - 1
-					break
-				}
-			}
 			end++
 		}
 		end = skipCharN(data, end, '\n', 1)
@@ -826,29 +823,9 @@ func (p *Parser) quote(data []byte) int {
 		beg = end
 	}
 
-	if captionContent, id, consumed := p.caption(data[end:], []byte("Quote: ")); consumed > 0 {
-		figure := &ast.CaptionFigure{}
-		caption := &ast.Caption{}
-		figure.HeadingID = id
-		p.Inline(caption, captionContent)
-
-		p.addBlock(figure) // this discard any attributes
-		block := &ast.BlockQuote{}
-		block.AsContainer().Attribute = figure.AsContainer().Attribute
-		p.addChild(block)
-		p.block(raw.Bytes())
-		p.finalize(block)
-
-		p.addChild(caption)
-		p.finalize(figure)
-
-		end += consumed
-
-		return end
-	}
-
-	block := p.addBlock(&ast.BlockQuote{})
-	p.block(raw.Bytes())
+	quote := &ast.BlockQuote{}
+	quote.Literal = raw.Bytes()
+	block := p.addBlock(quote)
 	p.finalize(block)
 
 	return end

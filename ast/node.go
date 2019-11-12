@@ -187,8 +187,8 @@ type Document struct {
 
 func (doc *Document) MarshalJSON() ([]byte, error) {
 	children := doc.GetChildren()
-	if len(children) != 0 && len(children[0].GetChildren()) != 0 {
-		return json.Marshal(children[0].GetChildren())
+	if len(children) != 0 {
+		return json.Marshal(children)
 	}
 	return []byte("[]"), nil
 }
@@ -254,6 +254,17 @@ type ListItem struct {
 // Paragraph represents markdown paragraph node
 type Paragraph struct {
 	Container
+}
+
+func (c *Paragraph) MarshalJSON() ([]byte, error) {
+	type ParagraphJSON struct {
+		Type     string `json:"type"`
+		Children []Node `json:"children"`
+	}
+	var c1 ParagraphJSON
+	c1.Children = c.Children
+	c1.Type = "paragraph"
+	return json.Marshal(&c1)
 }
 
 // Math represents markdown MathAjax inline node
